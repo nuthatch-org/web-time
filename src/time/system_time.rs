@@ -18,7 +18,7 @@ impl SystemTime {
 	#[allow(clippy::missing_panics_doc)]
 	pub fn now() -> Self {
 		#[allow(clippy::as_conversions, clippy::cast_possible_truncation)]
-		let ms = js_sys::Date::now() as i64;
+		let ms = super::js::now_ms() as i64;
 		let ms = ms.try_into().expect("found negative timestamp");
 
 		Self(Duration::from_millis(ms))

@@ -1,39 +1,14 @@
-//! Bindings to the JS API.
+//! RFC-0077 S0: the host's clock, in place of `performance.now()` and `Date.now()`.
 
-use wasm_bindgen::prelude::wasm_bindgen;
-use wasm_bindgen::{JsCast, JsValue};
-
-#[wasm_bindgen]
+#[link(wasm_import_module = "nuthatch")]
 extern "C" {
-	/// Type for the [global object](https://developer.mozilla.org/en-US/docs/Glossary/Global_object).
-	type Global;
-
-	/// Returns the [`Performance`](https://developer.mozilla.org/en-US/docs/Web/API/Performance) object.
-	#[wasm_bindgen(method, getter)]
-	fn performance(this: &Global) -> JsValue;
-
-	/// Type for the [`Performance` object](https://developer.mozilla.org/en-US/docs/Web/API/Performance).
-	pub(super) type Performance;
-
-	/// Binding to [`Performance.now()`](https://developer.mozilla.org/en-US/docs/Web/API/Performance/now).
-	#[wasm_bindgen(method)]
-	pub(super) fn now(this: &Performance) -> f64;
-
-	/// Binding to [`Performance.timeOrigin`](https://developer.mozilla.org/en-US/docs/Web/API/Performance/timeOrigin).
-	#[cfg(target_feature = "atomics")]
-	#[wasm_bindgen(method, getter, js_name = timeOrigin)]
-	pub(super) fn time_origin(this: &Performance) -> f64;
+	#[link_name = "now_ms"]
+	fn host_now_ms() -> f64;
 }
 
-thread_local! {
-	pub(super) static PERFORMANCE: Performance = {
-		let global: Global = js_sys::global().unchecked_into();
-		let performance = global.performance();
-
-		if performance.is_undefined() {
-			panic!("`Performance` object not found")
-		} else {
-			performance.unchecked_into()
-		}
-	};
+/// Milliseconds since the Unix epoch, as the host reads its wall clock.
+#[allow(unsafe_code)]
+pub(super) fn now_ms() -> f64 {
+	// SAFETY: takes nothing and returns a number.
+	unsafe { host_now_ms() }
 }

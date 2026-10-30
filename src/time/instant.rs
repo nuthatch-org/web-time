@@ -3,12 +3,6 @@
 use std::ops::{Add, AddAssign, Sub, SubAssign};
 use std::time::Duration;
 
-use super::js::PERFORMANCE;
-
-#[cfg(target_feature = "atomics")]
-thread_local! {
-	static ORIGIN: f64 = PERFORMANCE.with(super::js::Performance::time_origin);
-}
 
 /// See [`std::time::Instant`].
 #[derive(Clone, Copy, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
@@ -26,13 +20,7 @@ impl Instant {
 	/// [worklet]: https://developer.mozilla.org/en-US/docs/Web/API/Worklet
 	#[must_use]
 	pub fn now() -> Self {
-		let now = PERFORMANCE.with(|performance| {
-			#[cfg(target_feature = "atomics")]
-			return ORIGIN.with(|origin| performance.now() + origin);
-
-			#[cfg(not(target_feature = "atomics"))]
-			performance.now()
-		});
+		let now = super::js::now_ms();
 
 		Self(time_stamp_to_duration(now))
 	}
